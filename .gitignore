@@ -6,3 +6,6 @@ examples
 datasets
 logs
 *_results
+output/
+*tmp*
+graph_viewer/
