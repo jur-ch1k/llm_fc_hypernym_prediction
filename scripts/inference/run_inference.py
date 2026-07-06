@@ -21,8 +21,8 @@ HF_CACHE_ROOT = REPO_ROOT / ".cache" / "huggingface"
 HF_HUB_CACHE = HF_CACHE_ROOT / "hub"
 
 # Только локальный HF-кэш в репозитории (не ~/.cache на диске C:).
-# os.environ["HF_HOME"] = str(HF_CACHE_ROOT)
-# os.environ["HF_HUB_CACHE"] = str(HF_HUB_CACHE)
+os.environ["HF_HOME"] = str(HF_CACHE_ROOT)
+os.environ["HF_HUB_CACHE"] = str(HF_HUB_CACHE)
 
 import torch
 from peft import PeftModel
@@ -156,14 +156,12 @@ def load_model_and_tokenizer(adapter_dir: Path):
     tokenizer = AutoTokenizer.from_pretrained(
         base_model_id,
         trust_remote_code=True,
-        cache_dir=str(HF_HUB_CACHE),
     )
     base_model = AutoModelForCausalLM.from_pretrained(
         base_model_id,
         torch_dtype=torch.bfloat16,
         device_map="auto",
         trust_remote_code=True,
-        cache_dir=str(HF_HUB_CACHE),
     )
     model = PeftModel.from_pretrained(base_model, str(adapter_dir))
     model.eval()
