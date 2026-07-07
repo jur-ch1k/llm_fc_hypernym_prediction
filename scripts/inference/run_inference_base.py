@@ -3,11 +3,15 @@
 Запуск без аргументов:
     python run_inference_base.py
 
+С указанием начальной строки (0-based, включительно):
+    python run_inference_base.py --from 50
+
 Всегда сохраняет полный .md-лог (--verbose) и поле final_answer (--add-final).
 """
 
 from __future__ import annotations
 
+import argparse
 import gc
 import json
 import os
@@ -22,8 +26,8 @@ HF_CACHE_ROOT = REPO_ROOT / ".cache" / "huggingface"
 HF_HUB_CACHE = HF_CACHE_ROOT / "hub"
 
 # Только локальный HF-кэш в репозитории (не ~/.cache на диске C:).
-os.environ["HF_HOME"] = str(HF_CACHE_ROOT)
-os.environ["HF_HUB_CACHE"] = str(HF_HUB_CACHE)
+# os.environ["HF_HOME"] = str(HF_CACHE_ROOT)
+# os.environ["HF_HUB_CACHE"] = str(HF_HUB_CACHE)
 
 import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer
@@ -41,7 +45,7 @@ from run_inference import (  # noqa: E402
     save_verbose_dialog,
 )
 
-BASE_MODEL_ID = "Qwen/Qwen3.5-2B"
+BASE_MODEL_ID = "Qwen/Qwen3.5-4B"
 SEED_DIR = "datasets/seed_42"
 MAX_ITERS = 15
 TEMPERATURE = 0.0
@@ -52,20 +56,35 @@ def load_base_model_and_tokenizer(model_id: str):
     tokenizer = AutoTokenizer.from_pretrained(
         model_id,
         trust_remote_code=True,
-        cache_dir=str(HF_HUB_CACHE),
     )
     model = AutoModelForCausalLM.from_pretrained(
         model_id,
         torch_dtype=torch.bfloat16,
         device_map="auto",
         trust_remote_code=True,
-        cache_dir=str(HF_HUB_CACHE),
     )
     model.eval()
     return model, tokenizer
 
 
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="Инференс базовой модели (без LoRA)")
+    parser.add_argument(
+        "--from",
+        dest="from_index",
+        type=int,
+        default=0,
+        metavar="N",
+        help="Начать с строки N датасета (0-based, включительно) и обработать до конца",
+    )
+    return parser.parse_args()
+
+
 def main() -> None:
+    args = parse_args()
+    if args.from_index < 0:
+        raise ValueError(f"--from должен быть >= 0, получено {args.from_index}")
+
     dataset_path = PROJECT_ROOT / SEED_DIR / "test_dataset.tsv"
     if not dataset_path.exists():
         raise FileNotFoundError(f"Test dataset не найден: {dataset_path}")
@@ -80,11 +99,19 @@ def main() -> None:
 
     wordnet_path = str(PROJECT_ROOT / WORDNET_PATH)
     wn = RuWordNet(wordnet_path)
-    rows = iter_dataset_rows(None, str(dataset_path))
+    all_rows = iter_dataset_rows(None, str(dataset_path))
+    rows = [row for row in all_rows if row.row_index >= args.from_index]
+    if not rows:
+        raise ValueError(
+            f"Нет строк для инференса: --from {args.from_index}, "
+            f"в датасете {len(all_rows)} строк (индексы 0..{len(all_rows) - 1})"
+        )
+    print(f"Dataset rows: {len(rows)} (from index {args.from_index}, total {len(all_rows)})")
 
     run_meta = {
         "base_only": True,
         "base_model": BASE_MODEL_ID,
+        "from_index": args.from_index,
         "limit": None,
         "max_iters": MAX_ITERS,
         "temperature": TEMPERATURE,
