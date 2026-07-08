@@ -134,8 +134,7 @@ def load_corpus_text(corpus_folder, item_path):
         # Найти тег <predict_kb>
         tag_match = re.search(r'<predict_kb>(.*?)</predict_kb>', content)
         if not tag_match:
-            #print('Tag not found in file content')
-            return None
+            raise ValueError(f"Тег <predict_kb> не найден в файле: {file_path}")
         
         tag_content = tag_match.group(1)
         #print(f"Found tag content: '{tag_content}'")

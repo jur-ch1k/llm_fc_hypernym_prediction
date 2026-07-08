@@ -1,8 +1,9 @@
 """
 Случайное разбиение context_analyser_dataset.tsv на train / eval / test.
 
-Перемешивает строки с фиксированным seed и сохраняет три TSV в подпапку
-seed_{seed} рядом с исходным файлом.
+Разбивает по уникальным словам (первый столбец) для избежания data leakage:
+одно слово не попадёт в разные сплиты. Перемешивает слова с фиксированным
+seed и сохраняет три TSV в подпапку seed_{seed} рядом с исходным файлом.
 
 Запуск:
     python scripts/split_dataset.py
@@ -59,6 +60,15 @@ def _read_lines(path: Path) -> list[str]:
     return lines
 
 
+def _group_lines_by_word(lines: list[str]) -> dict[str, list[str]]:
+    """Группирует строки по первому столбцу (слову)."""
+    groups: dict[str, list[str]] = {}
+    for line in lines:
+        word = line.split("\t", 1)[0].strip()
+        groups.setdefault(word, []).append(line)
+    return groups
+
+
 def _write_lines(path: Path, lines: list[str]) -> None:
     with open(path, "w", encoding="utf-8", newline="\n") as f:
         for line in lines:
@@ -72,24 +82,30 @@ def split_lines(
     test_pct: int,
     seed: int,
 ) -> tuple[list[str], list[str], list[str]]:
-    shuffled = lines.copy()
+    """Разбивает строки по уникальным словам (первый столбец) для избежания data leakage."""
+    word_groups = _group_lines_by_word(lines)
+    words = list(word_groups.keys())
+
     rng = random.Random(seed)
-    rng.shuffle(shuffled)
+    rng.shuffle(words)
 
-    n = len(shuffled)
-    train_n = n * train_pct // 100
+    n = len(words)
+    test_n = n * test_pct // 100
     eval_n = n * eval_pct // 100
-    # Остаток от деления уходит в test.
-    test_n = n - train_n - eval_n
+    # Остаток от деления уходит в train.
+    train_n = n - test_n - eval_n
 
-    if test_n < 0:
-        raise RuntimeError("Некорректное разбиение: отрицательный размер test.")
+    if train_n < 0:
+        raise RuntimeError("Некорректное разбиение: отрицательный размер train.")
 
-    train_lines = shuffled[:train_n]
-    eval_lines = shuffled[train_n : train_n + eval_n]
-    test_lines = shuffled[train_n + eval_n :]
+    test_words = words[:test_n]
+    eval_words = words[test_n : test_n + eval_n]
+    train_words = words[test_n + eval_n :]
 
-    assert len(train_lines) + len(eval_lines) + len(test_lines) == n
+    train_lines = [line for w in train_words for line in word_groups[w]]
+    eval_lines = [line for w in eval_words for line in word_groups[w]]
+    test_lines = [line for w in test_words for line in word_groups[w]]
+
     return train_lines, eval_lines, test_lines
 
 
@@ -156,9 +172,11 @@ def main() -> None:
 
     print(f"Исходный файл: {input_path}")
     print(f"Строк всего: {len(lines)}")
+    print(f"Уникальных слов: {len(_group_lines_by_word(lines))}")
     print(f"Seed: {args.seed}")
     print(f"Доли: train={train_pct}% eval={eval_pct}% test={test_pct}%")
-    print(f"Размеры: train={len(train_lines)} eval={len(eval_lines)} test={len(test_lines)}")
+    print(f"Размеры (строки): train={len(train_lines)} eval={len(eval_lines)} test={len(test_lines)}")
+    print(f"Размеры (слова): train={len(_group_lines_by_word(train_lines))} eval={len(_group_lines_by_word(eval_lines))} test={len(_group_lines_by_word(test_lines))}")
     print(f"Выходная папка: {out_dir}")
     print(f"  {train_path.name}")
     print(f"  {eval_path.name}")

@@ -34,7 +34,7 @@ sys.path.insert(0, str(SCRIPTS))
 from analyze_dataset_tokens import load_records, resolve_output_path  # noqa: E402
 from utils.tools import hyponym_only  # noqa: E402
 
-DEFAULT_MODEL = "Qwen/Qwen3.5-2B"
+DEFAULT_MODEL = "Qwen/Qwen3.5-4B"
 DEFAULT_STEP = 500
 
 if hasattr(sys.stdout, "reconfigure"):

@@ -108,8 +108,7 @@ def _process_row(
 
         context_text = load_context(traj.context_file)
         if not context_text:
-            tqdm.write(f"Пропуск {traj_path.name}: нет контекста {traj.context_file}")
-            continue
+            raise ValueError(f"{traj_path.name}: нет контекста {traj.context_file}")
 
         messages = trajectory_to_messages(wn, traj, context_text)
         records.append(messages_to_jsonl_record(messages))
