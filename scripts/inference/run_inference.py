@@ -159,9 +159,10 @@ def load_model_and_tokenizer(adapter_dir: Path):
     )
     base_model = AutoModelForCausalLM.from_pretrained(
         base_model_id,
-        torch_dtype=torch.bfloat16,
+        dtype=torch.bfloat16,
         device_map="auto",
         trust_remote_code=True,
+        attn_implementation='flash_attention_2',
     )
     model = PeftModel.from_pretrained(base_model, str(adapter_dir))
     model.eval()
