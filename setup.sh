@@ -6,7 +6,7 @@ pip install torch==2.7.0 torchvision==0.22.0 torchaudio==2.7.0 \
     --index-url https://download.pytorch.org/whl/cu126
 
 echo "=== Шаг 2/5: Python-зависимости (без трогания torch) ==="
-pip install -r requirements_ds_server.txt --no-deps
+pip install -r requirements_ds_server.txt
 
 echo "=== Шаг 3/5: flash-attn (пересборка под текущий torch) ==="
 pip install flash-attn --no-build-isolation --no-cache-dir --force-reinstall --no-deps
