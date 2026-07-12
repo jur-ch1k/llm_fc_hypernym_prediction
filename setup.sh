@@ -15,6 +15,7 @@ echo "=== Шаг 4/5: flash-linear-attention (без зависимостей) =
 pip install flash-linear-attention[cuda] \
     --no-build-isolation \
     --no-cache-dir \
+    --no-deps \
     --no-binary flash-linear-attention \
     --force-reinstall
 
