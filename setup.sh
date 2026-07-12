@@ -12,7 +12,11 @@ echo "=== Шаг 3/5: flash-attn (пересборка под текущий tor
 pip install flash-attn --no-build-isolation --no-cache-dir --force-reinstall --no-deps
 
 echo "=== Шаг 4/5: flash-linear-attention (без зависимостей) ==="
-pip install flash-linear-attention[cuda]==0.5.1 --no-deps
+pip install flash-linear-attention[cuda]==0.5.1 \
+    --no-build-isolation \
+    --no-cache-dir \
+    --no-deps \
+    --no-binary flash-linear-attention
 
 echo "=== Шаг 5/5: causal-conv1d (сборка с текущим torch) ==="
 pip install causal-conv1d --no-build-isolation
