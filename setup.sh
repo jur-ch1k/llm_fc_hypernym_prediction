@@ -9,14 +9,15 @@ echo "=== Шаг 2/5: Python-зависимости (без трогания tor
 pip install -r requirements_ds_server.txt
 
 echo "=== Шаг 3/5: flash-attn (пересборка под текущий torch) ==="
-pip install flash-attn --no-build-isolation --no-cache-dir --force-reinstall --no-deps
+pip install flash-attn==2.7.4.post1 --no-build-isolation --no-cache-dir --force-reinstall --no-deps
 
 echo "=== Шаг 4/5: flash-linear-attention (без зависимостей) ==="
-pip install flash-linear-attention[cuda]==0.5.1 \
+pip install flash-linear-attention[cuda] \
     --no-build-isolation \
     --no-cache-dir \
     --no-deps \
-    --no-binary flash-linear-attention
+    --no-binary flash-linear-attention \
+    --force-reinstall
 
 echo "=== Шаг 5/5: causal-conv1d (сборка с текущим torch) ==="
 pip install causal-conv1d --no-build-isolation
