@@ -418,7 +418,7 @@ def main() -> None:
     parser.add_argument("--max-iters", type=int, default=15)
     parser.add_argument(
         "--seed-dir",
-        default="datasets/seed_42",
+        default="datasets",
         help="Папка с test_dataset.tsv относительно llm_fc_hypernym_prediction",
     )
     parser.add_argument(
