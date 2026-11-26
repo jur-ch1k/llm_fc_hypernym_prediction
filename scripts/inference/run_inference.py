@@ -30,7 +30,7 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from sft_pipeline.config import CORPUS_DIR, WORDNET_PATH  # noqa: E402
+from sft_pipeline.config import TEST_CORPUS_DIR, WORDNET_PATH  # noqa: E402
 from sft_pipeline.data_loaders import iter_dataset_rows, load_context  # noqa: E402
 from sft_pipeline.prompts import load_system_prompt  # noqa: E402
 from sft_pipeline.tools_runtime import execute_tool, is_virtual_root_token  # noqa: E402
@@ -418,7 +418,7 @@ def main() -> None:
     parser.add_argument("--max-iters", type=int, default=15)
     parser.add_argument(
         "--seed-dir",
-        default="datasets/seed_42",
+        default="datasets",
         help="Папка с test_dataset.tsv относительно llm_fc_hypernym_prediction",
     )
     parser.add_argument(
@@ -491,7 +491,7 @@ def main() -> None:
 
     for row in rows:
         context_file = row.context_files[0]
-        context_text = load_context(context_file, str(PROJECT_ROOT / CORPUS_DIR))
+        context_text = load_context(context_file, str(PROJECT_ROOT / TEST_CORPUS_DIR))
         word = row.word
         print(f"[{row.row_index}] {word}")
 
